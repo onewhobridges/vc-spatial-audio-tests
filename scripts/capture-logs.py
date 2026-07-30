@@ -41,18 +41,19 @@ async def capture(ws_url: str, log_path: str) -> None:
 
 
 async def main() -> None:
-    print("Waiting for Vesktop debug port on :9222 ...", flush=True)
+    cdp_port = os.environ.get("CDP_PORT", "9222")
+    print(f"Waiting for Vesktop debug port on :{cdp_port} ...", flush=True)
     targets = None
     for _ in range(30):
         try:
-            with urllib.request.urlopen("http://localhost:9222/json", timeout=2) as r:
+            with urllib.request.urlopen(f"http://localhost:{cdp_port}/json", timeout=2) as r:
                 targets = json.loads(r.read())
             break
         except Exception:
             await asyncio.sleep(1)
 
     if not targets:
-        sys.exit("Could not reach Vesktop debug port after 30 s")
+        sys.exit(f"Could not reach Vesktop debug port {cdp_port} after 30 s")
 
     page = next(
         (t for t in targets if t.get("type") == "page" and "discord.com" in t.get("url", "")),
@@ -61,9 +62,10 @@ async def main() -> None:
     if not page:
         sys.exit(f"No page target found. Targets: {[t.get('type') for t in targets]}")
 
+    channel_id = os.environ.get("VESKTOP_TEST_CHANNEL_ID", "unknown")
     os.makedirs("/home/bridger/sabbatical/logs", exist_ok=True)
     ts = int(datetime.now().timestamp() * 1000)
-    log_path = f"/home/bridger/sabbatical/logs/discord.com-{ts}.log"
+    log_path = f"/home/bridger/sabbatical/logs/discord.com-{channel_id}-{ts}.log"
 
     await capture(page["webSocketDebuggerUrl"], log_path)
 

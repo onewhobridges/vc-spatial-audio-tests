@@ -20,10 +20,10 @@
 ### Task 1: Live-client button-presence check script
 
 **Files:**
-- Create: `scripts/test-spatial-button.py`
+- Create: `tests/test-spatial-button.py`
 
 **Interfaces:**
-- Produces: a CLI script, `python3 scripts/test-spatial-button.py`, exit code `0` + `PASS: ...` on stdout when the button is found in the live DOM, exit code `1` + `FAIL: ...` when not found.
+- Produces: a CLI script, `python3 tests/test-spatial-button.py`, exit code `0` + `PASS: ...` on stdout when the button is found in the live DOM, exit code `1` + `FAIL: ...` when not found.
 - Consumes: `scripts/devtools-eval.py` (unmodified) as a subprocess, passing it a JS boolean expression and reading its stdout (`"true"` / `"false"`).
 
 - [ ] **Step 1: Write the script**
@@ -39,7 +39,7 @@ Preconditions (manual, one-time per run):
   3. You are connected to a voice channel in Vesktop.
 
 Usage:
-  python3 scripts/test-spatial-button.py
+  python3 tests/test-spatial-button.py
 """
 import subprocess
 import sys
@@ -78,13 +78,13 @@ if __name__ == "__main__":
 
 - [ ] **Step 2: Make it executable**
 
-Run: `chmod +x scripts/test-spatial-button.py`
+Run: `chmod +x tests/test-spatial-button.py`
 
 - [ ] **Step 3: Verify the "red" case — button correctly reported absent**
 
 Manual setup: launch `scripts/vesktop-debug.sh`, log in, enable the `SpatialAudio` plugin, but do **not** join any voice channel.
 
-Run: `python3 scripts/test-spatial-button.py`
+Run: `python3 tests/test-spatial-button.py`
 Expected output: `FAIL: spatial audio button not found — are you in a voice call with SpatialAudio enabled?`
 Expected exit code: `1` (check with `echo $?`)
 
@@ -92,6 +92,6 @@ Expected exit code: `1` (check with `echo $?`)
 
 Manual setup: in the same running Vesktop, join any voice channel.
 
-Run: `python3 scripts/test-spatial-button.py`
+Run: `python3 tests/test-spatial-button.py`
 Expected output: `PASS: spatial audio button found in voice call`
 Expected exit code: `0` (check with `echo $?`)

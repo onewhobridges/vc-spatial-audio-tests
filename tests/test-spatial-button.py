@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 """Integration test: verify the vc-spatial-audio button appears in a voice call.
 
-Preconditions (manual, one-time per run):
-  1. Vesktop is running with remote debugging enabled:
-       scripts/vesktop-debug.sh
-  2. The SpatialAudio plugin is enabled in Vencord settings.
-  3. You are connected to a voice channel in Vesktop.
+Preconditions:
+  1. You are connected to a voice channel in Vesktop.
 
 Usage:
   python3 scripts/test-spatial-button.py
@@ -14,7 +11,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-EVAL_SCRIPT = Path(__file__).parent / "devtools-eval.py"
+EVAL_SCRIPT = Path(__file__).parent.parent / "scripts" / "devtools-eval.py"
 BUTTON_SELECTOR = ".vc-spatial-button"
 
 
@@ -26,7 +23,7 @@ def button_present() -> bool:
     )
     if result.returncode != 0:
         sys.exit(f"devtools-eval failed: {result.stderr.strip()}")
-    return result.stdout.strip() == "true"
+    return result.stdout.strip() == "True"
 
 
 def main() -> None:

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** A script that launches Vesktop, gets an already-authenticated test account into a pre-designated voice channel, hands control back to the caller to run integration tests (e.g. `scripts/test-spatial-button.py`), then tears everything down.
+**Goal:** A script that launches Vesktop, gets an already-authenticated test account into a pre-designated voice channel, hands control back to the caller to run integration tests (e.g. `tests/test-spatial-button.py`), then tears everything down.
 
 **Architecture:** A bash orchestrator (`scripts/voice-integration-harness.sh`) drives the existing CDP harness (`scripts/vesktop-debug.sh` + `scripts/devtools-eval.py`, see `project-vesktop-cdp-debugging` memory) exactly the way `drag-debug*.js` + `simulate-drag*.py` already do: inject a JS helper file that hangs functions off `window`, then call those functions via one-shot `devtools-eval.py` invocations. The helper file (`scripts/voice-actions.js`) wraps four Vencord webpack internals — `UserStore`, `ChannelStore`, `PermissionStore`/`PermissionsBits`, and a `findByProps("selectVoiceChannel")` module — grounded against actual call sites in `Vencord/src/plugins/userVoiceShow/components.tsx` and `vc-spatial-audio/index.tsx` (see Task 1 notes). This harness does **not** perform Discord login — it assumes a human has already authenticated Vesktop with a test account that has channel access; the harness only checks for and uses that existing session.
 
@@ -33,7 +33,7 @@
 - Produces: `window.__voiceIntegration = { hasLoggedInUserWithAccess(channelId), joinVoiceChannel(channelId), leaveVoiceChannel(), currentVoiceChannelId() }`, installed by evaluating `scripts/voice-actions.js` through `devtools-eval.py -f`.
 - Consumes: `scripts/vesktop-debug.sh` (unmodified, backgrounded), `scripts/devtools-eval.py` (unmodified, invoked per-call via `python3`).
 
-- [ ] **Step 1: Write the injected helper library**
+- [x] **Step 1: Write the injected helper library**
 
 ```js
 // scripts/voice-actions.js
@@ -76,7 +76,7 @@
 })();
 ```
 
-- [ ] **Step 2: Write the orchestrator's launch + readiness-wait + injection portion**
+- [x] **Step 2: Write the orchestrator's launch + readiness-wait + injection portion**
 
 ```bash
 #!/bin/bash
@@ -138,7 +138,7 @@ fi
 echo "voice-actions.js injected; window.__voiceIntegration is ready."
 ```
 
-- [ ] **Step 3: Run it standalone to verify launch + readiness + injection**
+- [x] **Step 3: Run it standalone to verify launch + readiness + injection**
 
 Manual precondition: Vesktop must not already be logged out — a normal, previously-authenticated Vesktop profile is fine (no voice channel join needed yet for this step).
 
@@ -156,7 +156,7 @@ voice-actions.js injected; window.__voiceIntegration is ready.
 ```
 Then, since the script has no further steps yet, it exits and `cleanup` fires — confirm with `pgrep -x vesktop` (should print nothing) within a couple seconds of the script exiting.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add scripts/voice-actions.js scripts/voice-integration-harness.sh
@@ -173,7 +173,7 @@ git commit -m "feat: add voice integration harness launch/readiness/injection"
 **Interfaces:**
 - Consumes: `window.__voiceIntegration.hasLoggedInUserWithAccess(channelId)` from Task 1, called as `python3 devtools-eval.py "window.__voiceIntegration.hasLoggedInUserWithAccess('$CHANNEL_ID')"`.
 
-- [ ] **Step 1: Append the guard check**
+- [x] **Step 1: Append the guard check**
 
 Add immediately after the "voice-actions.js injected" line from Task 1 Step 2:
 
@@ -186,7 +186,7 @@ fi
 echo "Logged-in user has access to channel $CHANNEL_ID."
 ```
 
-- [ ] **Step 2: Verify the guard's "no access" path**
+- [x] **Step 2: Verify the guard's "no access" path**
 
 Manual setup: log Vesktop out (or leave it on an account that isn't a member of the target channel's server), then run with a channel ID that account cannot see:
 
@@ -197,7 +197,7 @@ echo "exit code: $?"
 
 Expected: last line of output is `No logged-in user with access to channel ... — exiting cleanly.`, exit code `0`, and `pgrep -x vesktop` prints nothing shortly after.
 
-- [ ] **Step 3: Verify the guard's "has access" path**
+- [x] **Step 3: Verify the guard's "has access" path**
 
 Manual setup: log Vesktop in with the test account, on a server it belongs to. Use that server's real channel ID.
 
@@ -207,7 +207,7 @@ VESKTOP_TEST_CHANNEL_ID=<real accessible channel id> bash scripts/voice-integrat
 
 Expected: last line is `Logged-in user has access to channel <id>.`, script then falls off the end (Task 3 not implemented yet) and exits 0 via cleanup.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add scripts/voice-integration-harness.sh
@@ -224,7 +224,7 @@ git commit -m "feat: guard voice join on logged-in user with channel access"
 **Interfaces:**
 - Consumes: `window.__voiceIntegration.joinVoiceChannel(channelId)`, `.currentVoiceChannelId()`, `.leaveVoiceChannel()` from Task 1.
 
-- [ ] **Step 1: Append join, wait-for-join, print, leave**
+- [x] **Step 1: Append join, wait-for-join, print, leave**
 
 Add after the `echo "Logged-in user has access..."` line from Task 2:
 
@@ -254,7 +254,7 @@ python3 "$EVAL" "window.__voiceIntegration.leaveVoiceChannel()" >/dev/null
 
 `cleanup` (already installed via `trap` in Task 1) runs automatically after this on script exit — no explicit teardown call needed here.
 
-- [ ] **Step 2: Verify the full happy path**
+- [x] **Step 2: Verify the full happy path**
 
 Manual setup: Vesktop logged in with a test account that has access to a real voice channel it isn't currently connected to.
 
@@ -275,11 +275,11 @@ After "Leaving voice channel..." prints and the script exits, confirm in the Ves
 
 Finally confirm teardown: `pgrep -x vesktop` prints nothing within a couple seconds of the script exiting.
 
-- [ ] **Step 3: Verify the timeout path (join never confirmed)**
+- [x] **Step 3: Verify the timeout path (join never confirmed)**
 
 Manual setup: temporarily set `CHANNEL_ID` to a syntactically-valid but nonexistent channel ID that still passes the guard check (e.g. reuse a real accessible channel ID for the guard, but this is hard to fake cleanly — alternatively, disconnect network/voice momentarily during the join window) — if this is impractical to trigger manually, code-review the loop logic instead: confirm it exits 1 with a clear stderr message after 10s and that `cleanup` still runs (`pgrep -x vesktop` empty afterward).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add scripts/voice-integration-harness.sh
